@@ -28,26 +28,30 @@ def dequeue_thread(id : int, conn : cx_Oracle.Connection):
                 break
 
 def main():
+    # configuration
+    CONNECTIONSTRING = 'user/password@hostname:1521/service'
+    THREADS = 21
 
-    connectionstring = 'user/password@hostname:1521/service'
-
-    # format = "%(asctime)s.%(msecs) %(message)s"
+    # logging formats
     format='%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s'
-
     logging.basicConfig(format=format, level=logging.INFO, datefmt="%H:%M:%S")    
 
     # open connections (lazy man's connection pool)    
     logging.info("Opening connections..")
     connections = []
-    for i in range (0, 21):
-        connections.append( cx_Oracle.connect(connectionstring, encoding='UTF-8', nencoding='UTF-8') )
+    for i in range(THREADS):
+        conn = cx_Oracle.connect(CONNECTIONSTRING, encoding='UTF-8', nencoding='UTF-8')
+        conn.module='DEQUEUE_TEST'
+        connections.append(conn)
+
         logging.info ("Connection %d opened" % i)
+    
     logging.info("..done")
     
     # start the treads
     logging.info("Starting threads..")
     threads = []
-    for i in range(0, 21):
+    for i in range(THREADS):
         threads.append( threading.Thread(target=dequeue_thread, args=(i,connections[i]), daemon=False))
         threads[i].start()
         logging.info("Thread %d started" % i)
